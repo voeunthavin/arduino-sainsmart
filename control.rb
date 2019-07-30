@@ -6,7 +6,7 @@ require_relative 'kinematics'
 
 
 class Control
-  DEVICE = '/dev/ttyUSB0'
+  DEVICE = '/dev/input/js0'
   BAUD = 115200
   DEADZONE = 4000.0
 
