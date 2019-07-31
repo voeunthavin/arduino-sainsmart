@@ -5,7 +5,8 @@
 
 // BASE, SHOULDER, ELBOW, ROLL, PITCH, WRIST, GRIPPER (defined in controllerbase.hh)
 const int SERVOPIN[] = {0, 1, 2, 3, 4, 5, 6};
-const int OFFSET[] = {1471, 1465, 700, 1240, 1550, 1366, 1333};// normally around 1500 except for elbow and gripper
+// Average of MIN & MAX (Mean position)
+const int OFFSET[] = {1471, 1665, 700, 1272, 1550, 1366, 1333};// normally around 1500 except for elbow and gripper
 
 #warning "Adjust these values for your robot to avoid self-collisions!"
 #warning "Control your robot carefully until you have inserted appropriate boundaries here!"

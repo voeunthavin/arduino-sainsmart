@@ -15,11 +15,9 @@ const int DRIVES   = 7;
 
 const float ELBOW_RANGE = 60;
 
-class ControllerBase
-{
+class ControllerBase {
 public:
-  ControllerBase(void): m_number(0), m_fraction(0), m_sign(0), m_teachFun(NULL), m_index(0) {
-    memset(m_teach, 0, sizeof(m_teach));
+  ControllerBase(void): m_number(0), m_fraction(0), m_sign(0), m_index(0) {
     memset(m_configuration, 0, sizeof(m_configuration));
   }
 
@@ -50,7 +48,7 @@ public:
     return m_curve[drive].target();
   }
 
-  float limit(float value, float lower, float upper) {
+  float limit(float value, float lower, float upper) { // make sure the pwm is within the boundaries
     return value < lower ? lower : value > upper ? upper : value;
   }
 
@@ -62,11 +60,11 @@ public:
     return (pwm - offset(drive)) / resolution(drive);
   }
 
-  float clipPWM(int drive, float value) {
+  float clipPWM(int drive, float value) { // make sure drive takes the pwm that's within the ranges
     return limit(value, lower(drive), upper(drive));
   }
 
-  float clipAngle(int drive, float value) {
+  float clipAngle(int drive, float value) { // just make sure the angle is valid for the joint range
     return pwmToAngle(drive, clipPWM(drive, angleToPWM(drive, value)));
   }
 
@@ -74,8 +72,7 @@ public:
     return limit(value, -ELBOW_RANGE - other, ELBOW_RANGE - other);
   }
 
-  float limitArmAngle(int drive, float value)
-  {
+  float limitArmAngle(int drive, float value) {
     switch (drive) {
     case ELBOW:
       return limitJoint(value, target(SHOULDER));
@@ -86,26 +83,11 @@ public:
     };
   }
 
-  void saveTeachPoint(int index) {
-    for (int i=0; i<DRIVES; i++)
-      m_teach[index][i] = target(i);
-  }
-
-  void loadTeachPoint(int index) {
-    targetPoint(m_teach[index]);
-  }
-
-  void displayTeachPoint(int index) {
-    reportTeachPoint(m_teach[index][0], m_teach[index][1], m_teach[index][2],
-                     m_teach[index][3], m_teach[index][4], m_teach[index][5], m_teach[index][6]);
-  }
-
-  void takeConfigurationValue(void) {
-    if (m_index < DRIVES) {
-      float angle = clipAngle(m_index, number());
+  void takeConfigurationValue(float num[]) { // Should modify this function to take the arguments in order to control the robot manually
+    for(m_index; m_index < DRIVES; m_index++) {
+      float angle = clipAngle(m_index, num[m_index]);
       m_configuration[m_index] = angle;
-      m_index++;
-    };
+    }
     resetNumber();
   }
 
@@ -136,11 +118,10 @@ public:
     targetAngleUnsafe(drive, angle, timeRequired(drive, angle));
   }
 
-  void targetPoint(float point[])
-  {
-    float time = timeRequired(point);
+  void targetPoint(void) { // The main function that I need to input manually the joints
+    float time = timeRequired(m_configuration);
     for (int i=0; i<DRIVES; i++)
-      targetAngleUnsafe(i, i == ELBOW ? limitArmAngle(ELBOW, point[i]) : point[i], time);
+      targetAngleUnsafe(i, i == ELBOW ? limitArmAngle(ELBOW, m_configuration[i]) : m_configuration[i], time);
   }
 
   void update(float dt) {
@@ -149,13 +130,8 @@ public:
   }
 
   void stopDrives(void) {
-    resetParser();
     for (int drive=0; drive<DRIVES; drive++)
       m_curve[drive].stop(m_curve[drive].pos());
-  }
-
-  bool hasNumber(void) {
-    return m_sign != 0;
   }
 
   float number(void) {
@@ -169,165 +145,12 @@ public:
     m_sign = 0;
   }
 
-  void resetParser(void) {
-    resetNumber();
-    memset(m_configuration, 0, sizeof(m_configuration));
-    m_index = 0;
-  }
-
-  bool drivesReady(void) {
-    bool retval = true;
-    for (int i=0; i<DRIVES; i++)
-      retval = retval && m_curve[i].ready();
-    return retval;
-  }
-
-  void parseChar(char c) {
-    if (m_teachFun) {
-      if (c >= 'a' && c <= 'l')
-        (this->*m_teachFun)(c - 'a');
-      else
-        stopDrives();
-      resetParser();
-      m_teachFun = NULL;
-    } else {
-      switch (c) {
-      case 'o':
-        reportReady(drivesReady());
-        resetParser();
-        break;
-      case 't':
-        if (hasNumber()) {
-          takeConfigurationValue();
-          reportRequired(timeRequired(m_configuration));
-        } else
-          reportTime();
-        resetParser();
-        break;
-      case 'T':
-        reportRemaining(m_curve[BASE].timeRemaining());
-        resetParser();
-        break;
-      case '.':
-        if (m_fraction > 0)
-          resetParser();
-        else
-          m_fraction = 1;
-        break;
-      case '-':
-        m_sign = m_sign == 0 ? -1 : -m_sign;
-        m_number = 0;
-        m_fraction = 0;
-        break;
-      case 'b':
-      case 'B':
-      case 'e':
-      case 'E':
-      case 's':
-      case 'S':
-      case 'r':
-      case 'R':
-      case 'p':
-      case 'P':
-      case 'w':
-      case 'W':
-      case 'g':
-      case 'G':
-        if (hasNumber()) {
-          if (isupper(c))
-            targetPWM(drive(c), number());
-          else
-            targetAngle(drive(c), number());
-        } else
-          if (isupper(c))
-            reportPWM(round(angleToPWM(drive(c), m_curve[drive(c)].pos())));
-          else
-            reportAngle(m_curve[drive(c)].pos());
-        resetParser();
-        break;
-      case '0':
-      case '1':
-      case '2':
-      case '3':
-      case '4':
-      case '5':
-      case '6':
-      case '7':
-      case '8':
-      case '9':
-        m_number = 10 * m_number + (c - '0');
-        m_fraction *= 0.1;
-        if (m_sign == 0) m_sign = 1;
-        break;
-      case '\'':
-        m_teachFun = &ControllerBase::loadTeachPoint;
-        break;
-      case 'm':
-        m_teachFun = &ControllerBase::saveTeachPoint;
-        break;
-      case 'd':
-        m_teachFun = &ControllerBase::displayTeachPoint;
-        break;
-      case ' ':
-        takeConfigurationValue();
-        break;
-      case 'c':
-        if (hasNumber()) {
-          takeConfigurationValue();
-          targetPoint(m_configuration);
-        } else
-          reportConfiguration(m_curve[0].pos(), m_curve[1].pos(), m_curve[2].pos(),
-                              m_curve[3].pos(), m_curve[4].pos(), m_curve[5].pos(), m_curve[6].pos());
-        resetParser();
-        break;
-      case 'l':
-        reportLower((lower(0) - offset(0)) / resolution(0),
-                    (lower(1) - offset(1)) / resolution(1),
-                    (lower(2) - offset(2)) / resolution(2),
-                    (lower(3) - offset(3)) / resolution(3),
-                    (lower(4) - offset(4)) / resolution(4),
-                    (lower(5) - offset(5)) / resolution(5),
-                    (lower(6) - offset(6)) / resolution(6));
-        resetParser();
-        break;
-      case 'u':
-        reportUpper((upper(0) - offset(0)) / resolution(0),
-                    (upper(1) - offset(1)) / resolution(1),
-                    (upper(2) - offset(2)) / resolution(2),
-                    (upper(3) - offset(3)) / resolution(3),
-                    (upper(4) - offset(4)) / resolution(4),
-                    (upper(5) - offset(5)) / resolution(5),
-                    (upper(6) - offset(6)) / resolution(6));
-        resetParser();
-        break;
-      default:
-        stopDrives();
-      };
-    };
-  }
-
-  virtual int offset(int drive) = 0;
-  virtual float resolution(int drive) = 0;
-  virtual int lower(int drive) = 0;
-  virtual int upper(int drive) = 0;
-  virtual void reportReady(bool ready) = 0;
-  virtual void reportTime(void) = 0;
-  virtual void reportRequired(float time) = 0;
-  virtual void reportRemaining(float time) = 0;
-  virtual void reportAngle(float) = 0;
-  virtual void reportPWM(int) = 0;
-  virtual void reportConfiguration(float, float, float, float, float, float, float) = 0;
-  virtual void reportLower(float, float, float, float, float, float, float) = 0;
-  virtual void reportUpper(float, float, float, float, float, float, float) = 0;
-  virtual void reportTeachPoint(float, float, float, float, float, float, float) = 0;
   virtual void writePWM(int, int) = 0;
 
 protected:
   float m_number;
   float m_fraction;
   char m_sign;
-  void (ControllerBase::*m_teachFun)(int);
-  float m_teach[12][DRIVES];
   int m_index;
   float m_configuration[DRIVES];
   Path m_curve[DRIVES];
