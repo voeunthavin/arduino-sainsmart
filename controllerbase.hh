@@ -25,25 +25,6 @@ public:
 
   Path &curve(int drive) { return m_curve[drive]; }
 
-  int drive(char c) {
-    switch (tolower(c)) {
-    case 's':
-      return SHOULDER;
-    case 'e':
-      return ELBOW;
-    case 'r':
-      return ROLL;
-    case 'p':
-      return PITCH;
-    case 'w':
-      return WRIST;
-    case 'g':
-      return GRIPPER;
-    default:
-      return BASE;
-    };
-  }
-
   float target(int drive) {
     return m_curve[drive].target();
   }
