@@ -12,7 +12,10 @@ public:
 		m_servo.begin();
 		m_servo.setPWMFreq(50);
 	}
-
+  int offset(int drive) { return OFFSET[drive]; }
+  float resolution(int drive) { return RESOLUTION[drive]; }
+  int lower(int drive) { return MIN[drive]; }
+  int upper(int drive) { return MAX[drive]; }
   void writePWM(int drive, int pwm) {
   	// Convert to Pulse Width from Pulse wide
 		int pulse_width = int(float(pwm) / 1000000 * 50 * 4096);
@@ -36,7 +39,7 @@ void loop() {
   int dt = millis() - t0;
 
   // Have array of joints with 7 angles, call takeConfigurationValue put the array in and call targetpoint
-  config_1[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+  float config_1[] = {0.0, -50.0, 0.0, 0.0, 90.0, 0.0, 0.0};
   controller.takeConfigurationValue(config_1);
   controller.targetPoint();
 

@@ -84,7 +84,7 @@ public:
   }
 
   void takeConfigurationValue(float num[]) { // Should modify this function to take the arguments in order to control the robot manually
-    for(m_index; m_index < DRIVES; m_index++) {
+    for(m_index = 0; m_index < DRIVES; m_index++) {
       float angle = clipAngle(m_index, num[m_index]);
       m_configuration[m_index] = angle;
     }
@@ -145,6 +145,10 @@ public:
     m_sign = 0;
   }
 
+  virtual int offset(int drive) = 0;
+  virtual float resolution(int drive) = 0;
+  virtual int lower(int drive) = 0;
+  virtual int upper(int drive) = 0;
   virtual void writePWM(int, int) = 0;
 
 protected:

@@ -25,7 +25,7 @@ public:
   float getDuration(void) { return m_duration; }
 
   // empty func take no argument & return if m_duration == 0 or not
-  bool ifEmpty(void) { return m_duration == 0; }
+  bool isEmpty(void) { return m_duration == 0; }
 
   // value func take a float arugment "time"
   float value(float time) { // The core func of this module calculating "time" with the object's fields - "m_distance" & "m_duration"
