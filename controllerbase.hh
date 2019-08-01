@@ -17,7 +17,7 @@ const float ELBOW_RANGE = 60;
 
 class ControllerBase {
 public:
-  ControllerBase(void): m_number(0), m_fraction(0), m_sign(0), m_index(0) {
+  ControllerBase(void): m_index(0) {
     memset(m_configuration, 0, sizeof(m_configuration));
   }
 
@@ -64,12 +64,25 @@ public:
     };
   }
 
-  void takeConfigurationValue(float num[]) { // Should modify this function to take the arguments in order to control the robot manually
-    for(m_index = 0; m_index < DRIVES; m_index++) {
-      float angle = clipAngle(m_index, num[m_index]);
-      m_configuration[m_index] = angle;
-    }
-    resetNumber();
+  // Should modify this function to take the arguments in order to control the robot manually
+  void takeConfigurationValue(float base, float shoulder, float elbow, float roll, float pitch, float wrist, float gripper) {
+    if (m_index < DRIVES) {
+      float angle;
+      angle = clipAngle(m_index, base);
+      m_configuration[m_index++] = angle;
+      angle = clipAngle(m_index, shoulder);
+      m_configuration[m_index++] = angle;
+      angle = clipAngle(m_index, elbow);
+      m_configuration[m_index++] = angle;
+      angle = clipAngle(m_index, roll);
+      m_configuration[m_index++] = angle;
+      angle = clipAngle(m_index, pitch);
+      m_configuration[m_index++] = angle;
+      angle = clipAngle(m_index, wrist);
+      m_configuration[m_index++] = angle;
+      angle = clipAngle(m_index, gripper);
+      m_configuration[m_index++] = angle;
+    };
   }
 
   float timeRequired(int drive, float angle) {
@@ -99,10 +112,10 @@ public:
     targetAngleUnsafe(drive, angle, timeRequired(drive, angle));
   }
 
-  void targetPoint(void) { // The main function that I need to input manually the joints
-    float time = timeRequired(m_configuration);
+  void targetPoint(float point[]) { // The main function that I need to input manually the joints
+    float time = timeRequired(point);
     for (int i=0; i<DRIVES; i++)
-      targetAngleUnsafe(i, i == ELBOW ? limitArmAngle(ELBOW, m_configuration[i]) : m_configuration[i], time);
+      targetAngleUnsafe(i, i == ELBOW ? limitArmAngle(ELBOW, point[i]) : point[i], time);
   }
 
   void update(float dt) {
@@ -115,16 +128,45 @@ public:
       m_curve[drive].stop(m_curve[drive].pos());
   }
 
-  float number(void) {
-    float fraction = (m_fraction == 0) ? 1 : m_fraction;
-    return m_number * fraction * m_sign;
+  void resetParser(void) {
+    memset(m_configuration, 0, sizeof(m_configuration));
+    m_index = 0;
   }
 
-  void resetNumber(void) {
-    m_number = 0;
-    m_fraction = 0;
-    m_sign = 0;
+  void parseColor(char c) {
+    switch(c) {
+      case 'w':
+        takeConfigurationValue(53.0, 20.0, 25.0, 50.0, 23.0, 20.0, 19.0);
+        targetPoint(m_configuration);
+        delay(1000);
+        resetParser();
+        break;
+      case 'r':
+        takeConfigurationValue(-29.0, -53.0, 28.0, 59.0, 0.0, -20.0, 59.0);
+        targetPoint(m_configuration);
+        delay(1000);
+        resetParser();
+        break;
+      case 'g':
+        takeConfigurationValue(63.0, 23.0, -24.0, 45.0, 0.0, 67.0, 0.0);
+        targetPoint(m_configuration);
+        delay(1000);
+        resetParser();
+        break;
+      case 'b':
+        takeConfigurationValue(83.0, -53.0, -21.0, 0.0, 24.0, 0.0, 24.0);
+        targetPoint(m_configuration);
+        delay(1000);
+        resetParser();
+        break;
+      default:
+        takeConfigurationValue(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+        targetPoint(m_configuration);
+        delay(1000);
+        resetParser();
+    };
   }
+
 
   virtual int offset(int drive) = 0;
   virtual float resolution(int drive) = 0;
@@ -133,9 +175,6 @@ public:
   virtual void writePWM(int, int) = 0;
 
 protected:
-  float m_number;
-  float m_fraction;
-  char m_sign;
   int m_index;
   float m_configuration[DRIVES];
   Path m_curve[DRIVES];
