@@ -133,37 +133,61 @@ public:
     m_index = 0;
   }
 
+  float getRemaining(void) {
+    return m_curve[BASE].timeRemaining();
+  }
+
   void parseColor(char c) {
+    // The standby joints configuration
+    if(getRemaining() == 0.0) {
+      takeConfigurationValue(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+      targetPoint(m_configuration);
+      resetParser();
+    }
+    // here is the logic to place the object in different location
     switch(c) {
       case 'w':
-        takeConfigurationValue(53.0, 20.0, 25.0, 50.0, 23.0, 20.0, 19.0);
-        targetPoint(m_configuration);
-        delay(1000);
-        resetParser();
+        if(getRemaining() == 0.0) {
+          takeConfigurationValue(53.0, 20.0, 25.0, 50.0, 23.0, 20.0, 19.0);
+          targetPoint(m_configuration);
+          reportRemaining(m_curve[BASE].timeRemaining());
+          reportConfiguration(m_curve[0].pos(), m_curve[1].pos(), m_curve[2].pos(),
+          m_curve[3].pos(), m_curve[4].pos(), m_curve[5].pos(), m_curve[6].pos());
+          resetParser();
+        }
         break;
       case 'r':
-        takeConfigurationValue(-29.0, -53.0, 28.0, 59.0, 0.0, -20.0, 59.0);
-        targetPoint(m_configuration);
-        delay(1000);
-        resetParser();
+        if(getRemaining() == 0.0) {
+          takeConfigurationValue(-29.0, -53.0, 28.0, 59.0, 0.0, -20.0, 59.0);
+          targetPoint(m_configuration);
+          reportRemaining(m_curve[BASE].timeRemaining());
+          reportConfiguration(m_curve[0].pos(), m_curve[1].pos(), m_curve[2].pos(),
+          m_curve[3].pos(), m_curve[4].pos(), m_curve[5].pos(), m_curve[6].pos());
+          resetParser();
+        }
         break;
       case 'g':
-        takeConfigurationValue(63.0, 23.0, -24.0, 45.0, 0.0, 67.0, 0.0);
-        targetPoint(m_configuration);
-        delay(1000);
-        resetParser();
+        if(getRemaining() == 0.0) {
+          takeConfigurationValue(63.0, 23.0, -24.0, 45.0, 0.0, 67.0, 0.0);
+          targetPoint(m_configuration);
+          reportRemaining(m_curve[BASE].timeRemaining());
+          reportConfiguration(m_curve[0].pos(), m_curve[1].pos(), m_curve[2].pos(),
+          m_curve[3].pos(), m_curve[4].pos(), m_curve[5].pos(), m_curve[6].pos());
+          resetParser();
+        }
         break;
       case 'b':
-        takeConfigurationValue(83.0, -53.0, -21.0, 0.0, 24.0, 0.0, 24.0);
-        targetPoint(m_configuration);
-        delay(1000);
-        resetParser();
+        if(getRemaining() == 0.0) {
+          takeConfigurationValue(83.0, -53.0, -21.0, 0.0, 24.0, 0.0, 24.0);
+          targetPoint(m_configuration);
+          reportRemaining(m_curve[BASE].timeRemaining());
+          reportConfiguration(m_curve[0].pos(), m_curve[1].pos(), m_curve[2].pos(),
+          m_curve[3].pos(), m_curve[4].pos(), m_curve[5].pos(), m_curve[6].pos());
+          resetParser();
+        }
         break;
       default:
-        takeConfigurationValue(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-        targetPoint(m_configuration);
-        delay(1000);
-        resetParser();
+        stopDrives();
     };
   }
 
@@ -173,6 +197,10 @@ public:
   virtual int lower(int drive) = 0;
   virtual int upper(int drive) = 0;
   virtual void writePWM(int, int) = 0;
+  virtual void reportTime(void) = 0;
+  virtual void reportRequired(float time) = 0;
+  virtual void reportRemaining(float time) = 0;
+  virtual void reportConfiguration(float, float, float, float, float, float, float) = 0;
 
 protected:
   int m_index;

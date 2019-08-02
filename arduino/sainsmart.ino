@@ -10,8 +10,6 @@
 #define OUT 8
 
 
-
-
 char color() {
   char c = ' ';
 
@@ -25,12 +23,12 @@ char color() {
   digitalWrite(S3, HIGH);
   int green = pulseIn(OUT, LOW);
 
-  Serial.print("RED: ");
-  Serial.println(red, DEC);
-  Serial.print("GREEN: ");
-  Serial.println(green, DEC);
-  Serial.print("BLUE: ");
-  Serial.println(blue, DEC);
+  // Serial.print("RED: ");
+  // Serial.println(red, DEC);
+  // Serial.print("GREEN: ");
+  // Serial.println(green, DEC);
+  // Serial.print("BLUE: ");
+  // Serial.println(blue, DEC);
 
   if (red < blue && red < green && red < 20) {
     if (red <=10 && green <=10 && blue <=10) {
@@ -76,6 +74,58 @@ public:
   float resolution(int drive) { return RESOLUTION[drive]; }
   int lower(int drive) { return MIN[drive]; }
   int upper(int drive) { return MAX[drive]; }
+  void reportInteger(int value) {
+    Serial.print(value);
+    Serial.write("\r\n");
+  }
+  void reportFloat(float value) {
+    Serial.print(value);
+    Serial.write("\r\n");
+  }
+  void reportTime(void) {
+    Serial.print(millis());
+    Serial.write("\r\n");
+  }
+  void reportReady(bool ready) {
+    reportInteger(ready ? 1 : 0);
+  }
+  void reportRequired(float time) {
+    reportFloat(time);
+  }
+  void reportRemaining(float time) {
+    reportFloat(time);
+  }
+  void reportAngle(float angle) {
+    reportFloat(angle);
+  }
+  void reportPWM(int pwm) {
+    reportInteger(pwm);
+  }
+  void reportConfiguration(float base, float shoulder, float elbow, float roll, float pitch, float wrist, float gripper) {
+    Serial.print(base);
+    Serial.write(" ");
+    Serial.print(shoulder);
+    Serial.write(" ");
+    Serial.print(elbow);
+    Serial.write(" ");
+    Serial.print(roll);
+    Serial.write(" ");
+    Serial.print(pitch);
+    Serial.write(" ");
+    Serial.print(wrist);
+    Serial.write(" ");
+    Serial.print(gripper);
+    Serial.write("\r\n");
+  }
+  void reportLower(float base, float shoulder, float elbow, float roll, float pitch, float wrist, float gripper) {
+    reportConfiguration(base, shoulder, elbow, roll, pitch, wrist, gripper);
+  }
+  void reportUpper(float base, float shoulder, float elbow, float roll, float pitch, float wrist, float gripper) {
+    reportConfiguration(base, shoulder, elbow, roll, pitch, wrist, gripper);
+  }
+  void reportTeachPoint(float base, float shoulder, float elbow, float roll, float pitch, float wrist, float gripper) {
+    reportConfiguration(base, shoulder, elbow, roll, pitch, wrist, gripper);
+  }
   void writePWM(int drive, int pwm) {
   	// Convert to Pulse Width from Pulse wide
 		int pulse_width = int(float(pwm) / 1000000 * 50 * 4096);
@@ -104,12 +154,14 @@ void setup() {
   digitalWrite(S0, HIGH);
   digitalWrite(S1, HIGH);
 
-  // t0 = millis();
+  t0 = millis();
 }
 
 void loop() {
-  // int dt = millis() - t0;
-  controller.parseColor(color());
-  // controller.update(dt * 0.001);
-  // t0 += dt;
+  int dt = millis() - t0;
+  if(controller.getRemaining() == 0.0) {
+    controller.parseColor(color());
+  }
+  controller.update(dt * 0.001);
+  t0 += dt;
 }
