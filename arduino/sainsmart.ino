@@ -86,20 +86,8 @@ public:
     Serial.print(millis());
     Serial.write("\r\n");
   }
-  void reportReady(bool ready) {
-    reportInteger(ready ? 1 : 0);
-  }
-  void reportRequired(float time) {
-    reportFloat(time);
-  }
   void reportRemaining(float time) {
     reportFloat(time);
-  }
-  void reportAngle(float angle) {
-    reportFloat(angle);
-  }
-  void reportPWM(int pwm) {
-    reportInteger(pwm);
   }
   void reportConfiguration(float base, float shoulder, float elbow, float roll, float pitch, float wrist, float gripper) {
     Serial.print(base);
@@ -117,15 +105,6 @@ public:
     Serial.print(gripper);
     Serial.write("\r\n");
   }
-  void reportLower(float base, float shoulder, float elbow, float roll, float pitch, float wrist, float gripper) {
-    reportConfiguration(base, shoulder, elbow, roll, pitch, wrist, gripper);
-  }
-  void reportUpper(float base, float shoulder, float elbow, float roll, float pitch, float wrist, float gripper) {
-    reportConfiguration(base, shoulder, elbow, roll, pitch, wrist, gripper);
-  }
-  void reportTeachPoint(float base, float shoulder, float elbow, float roll, float pitch, float wrist, float gripper) {
-    reportConfiguration(base, shoulder, elbow, roll, pitch, wrist, gripper);
-  }
   void writePWM(int drive, int pwm) {
   	// Convert to Pulse Width from Pulse wide
 		int pulse_width = int(float(pwm) / 1000000 * 50 * 4096);
@@ -136,7 +115,7 @@ protected:
 };
 
 
-unsigned long t0;
+unsigned long t0, previousMillis;
 
 Controller controller;
 
@@ -159,7 +138,7 @@ void setup() {
 
 void loop() {
   int dt = millis() - t0;
-  if(controller.getRemaining() == 0.0) {
+  if(controller.getRemaining() == 0) {
     controller.parseColor(color());
   }
   controller.update(dt * 0.001);

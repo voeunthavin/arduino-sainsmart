@@ -17,13 +17,13 @@ const float ELBOW_RANGE = 60;
 
 class ControllerBase {
 public:
-  ControllerBase(void): m_index(0) {
+  ControllerBase(void) {
     memset(m_configuration, 0, sizeof(m_configuration));
   }
 
   virtual ~ControllerBase() {}
 
-  Path &curve(int drive) { return m_curve[drive]; }
+  // Path &curve(int drive) { return m_curve[drive]; }
 
   float target(int drive) {
     return m_curve[drive].target();
@@ -61,28 +61,18 @@ public:
       return limitJoint(value, target(ELBOW));
     default:
       return value;
-    };
+    }
   }
 
   // Should modify this function to take the arguments in order to control the robot manually
   void takeConfigurationValue(float base, float shoulder, float elbow, float roll, float pitch, float wrist, float gripper) {
-    if (m_index < DRIVES) {
-      float angle;
-      angle = clipAngle(m_index, base);
-      m_configuration[m_index++] = angle;
-      angle = clipAngle(m_index, shoulder);
-      m_configuration[m_index++] = angle;
-      angle = clipAngle(m_index, elbow);
-      m_configuration[m_index++] = angle;
-      angle = clipAngle(m_index, roll);
-      m_configuration[m_index++] = angle;
-      angle = clipAngle(m_index, pitch);
-      m_configuration[m_index++] = angle;
-      angle = clipAngle(m_index, wrist);
-      m_configuration[m_index++] = angle;
-      angle = clipAngle(m_index, gripper);
-      m_configuration[m_index++] = angle;
-    };
+    m_configuration[0] = clipAngle(0, base);
+    m_configuration[1] = clipAngle(1, shoulder);
+    m_configuration[2] = clipAngle(2, elbow);
+    m_configuration[3] = clipAngle(3, roll);
+    m_configuration[4] = clipAngle(4, pitch);
+    m_configuration[5] = clipAngle(5, wrist);
+    m_configuration[6] = clipAngle(6, gripper);
   }
 
   float timeRequired(int drive, float angle) {
@@ -94,22 +84,12 @@ public:
     for (int i=0; i<DRIVES; i++) {
       float driveTime = timeRequired(i, point[i]);
       retval = retval < driveTime ? driveTime : retval;
-    };
+    }
     return retval;
   }
 
   void targetAngleUnsafe(int drive, float angle, float time) {
     m_curve[drive].retarget(angle, time);
-  }
-
-  void targetPWM(int drive, float pwm) {
-    float angle = limitArmAngle(drive, pwmToAngle(drive, clipPWM(drive, pwm)));
-    targetAngleUnsafe(drive, angle, timeRequired(drive, angle));
-  }
-
-  void targetAngle(int drive, float value) {
-    float angle = limitArmAngle(drive, clipAngle(drive, value));
-    targetAngleUnsafe(drive, angle, timeRequired(drive, angle));
   }
 
   void targetPoint(float point[]) { // The main function that I need to input manually the joints
@@ -130,29 +110,41 @@ public:
 
   void resetParser(void) {
     memset(m_configuration, 0, sizeof(m_configuration));
-    m_index = 0;
   }
 
-  float getRemaining(void) {
+  float getRemaining() {
     return m_curve[BASE].timeRemaining();
+  }
+
+  void printReportConfig() {
+    reportConfiguration(m_curve[0].pos(), m_curve[1].pos(), m_curve[2].pos(),
+    m_curve[3].pos(), m_curve[4].pos(), m_curve[5].pos(), m_curve[6].pos());
   }
 
   void parseColor(char c) {
     // The standby joints configuration
-    if(getRemaining() == 0.0) {
-      takeConfigurationValue(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-      targetPoint(m_configuration);
-      resetParser();
-    }
+    takeConfigurationValue(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    targetPoint(m_configuration);
+    printReportConfig();
+    reportRemaining(getRemaining());
+
+    // if(getRemaining() == 0.0) {
+    //   if(c == 'w' || c == 'r' || c =='g' || c == 'b') {
+    //     takeConfigurationValue(0.0, -70.0, 35.0, 50.0, 0.0, -75.0, 90.0);
+    //     targetPoint(m_configuration);
+    //     reportRemaining(getRemaining());
+    //     printReportConfig();
+    //   }
+    // }
+
     // here is the logic to place the object in different location
     switch(c) {
       case 'w':
         if(getRemaining() == 0.0) {
           takeConfigurationValue(53.0, 20.0, 25.0, 50.0, 23.0, 20.0, 19.0);
           targetPoint(m_configuration);
-          reportRemaining(m_curve[BASE].timeRemaining());
-          reportConfiguration(m_curve[0].pos(), m_curve[1].pos(), m_curve[2].pos(),
-          m_curve[3].pos(), m_curve[4].pos(), m_curve[5].pos(), m_curve[6].pos());
+          printReportConfig();
+          reportRemaining(getRemaining());
           resetParser();
         }
         break;
@@ -160,9 +152,8 @@ public:
         if(getRemaining() == 0.0) {
           takeConfigurationValue(-29.0, -53.0, 28.0, 59.0, 0.0, -20.0, 59.0);
           targetPoint(m_configuration);
-          reportRemaining(m_curve[BASE].timeRemaining());
-          reportConfiguration(m_curve[0].pos(), m_curve[1].pos(), m_curve[2].pos(),
-          m_curve[3].pos(), m_curve[4].pos(), m_curve[5].pos(), m_curve[6].pos());
+          printReportConfig();
+          reportRemaining(getRemaining());
           resetParser();
         }
         break;
@@ -170,9 +161,8 @@ public:
         if(getRemaining() == 0.0) {
           takeConfigurationValue(63.0, 23.0, -24.0, 45.0, 0.0, 67.0, 0.0);
           targetPoint(m_configuration);
-          reportRemaining(m_curve[BASE].timeRemaining());
-          reportConfiguration(m_curve[0].pos(), m_curve[1].pos(), m_curve[2].pos(),
-          m_curve[3].pos(), m_curve[4].pos(), m_curve[5].pos(), m_curve[6].pos());
+          printReportConfig();
+          reportRemaining(getRemaining());
           resetParser();
         }
         break;
@@ -180,15 +170,14 @@ public:
         if(getRemaining() == 0.0) {
           takeConfigurationValue(83.0, -53.0, -21.0, 0.0, 24.0, 0.0, 24.0);
           targetPoint(m_configuration);
-          reportRemaining(m_curve[BASE].timeRemaining());
-          reportConfiguration(m_curve[0].pos(), m_curve[1].pos(), m_curve[2].pos(),
-          m_curve[3].pos(), m_curve[4].pos(), m_curve[5].pos(), m_curve[6].pos());
+          printReportConfig();
+          reportRemaining(getRemaining());
           resetParser();
         }
         break;
       default:
         stopDrives();
-    };
+    }
   }
 
 
@@ -197,13 +186,10 @@ public:
   virtual int lower(int drive) = 0;
   virtual int upper(int drive) = 0;
   virtual void writePWM(int, int) = 0;
-  virtual void reportTime(void) = 0;
-  virtual void reportRequired(float time) = 0;
   virtual void reportRemaining(float time) = 0;
   virtual void reportConfiguration(float, float, float, float, float, float, float) = 0;
 
 protected:
-  int m_index;
   float m_configuration[DRIVES];
   Path m_curve[DRIVES];
 };
