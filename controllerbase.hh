@@ -79,10 +79,10 @@ public:
     return Profile::timeRequired(fabs(angle - target(drive)), MAXJERK);
   }
 
-  float timeRequired(float point[]) {
+  float timeRequired() {
     float retval = 0;
     for (int i=0; i<DRIVES; i++) {
-      float driveTime = timeRequired(i, point[i]);
+      float driveTime = timeRequired(i, m_configuration[i]);
       retval = retval < driveTime ? driveTime : retval;
     }
     return retval;
@@ -92,10 +92,10 @@ public:
     m_curve[drive].retarget(angle, time);
   }
 
-  void targetPoint(float point[]) { // The main function that I need to input manually the joints
-    float time = timeRequired(point);
+  void targetPoint() { // The main function that I need to input manually the joints
+    float time = timeRequired();
     for (int i=0; i<DRIVES; i++)
-      targetAngleUnsafe(i, i == ELBOW ? limitArmAngle(ELBOW, point[i]) : point[i], time);
+      targetAngleUnsafe(i, i == ELBOW ? limitArmAngle(ELBOW, m_configuration[i]) : m_configuration[i], time);
   }
 
   void update(float dt) {
@@ -115,70 +115,66 @@ public:
   float getRemaining() {
     return m_curve[BASE].timeRemaining();
   }
+  float getRequired() {
+    return timeRequired();
+  }
 
   void printReportConfig() {
     reportConfiguration(m_curve[0].pos(), m_curve[1].pos(), m_curve[2].pos(),
     m_curve[3].pos(), m_curve[4].pos(), m_curve[5].pos(), m_curve[6].pos());
   }
 
-  void parseColor(char c) {
-    // The standby joints configuration
-    takeConfigurationValue(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-    targetPoint(m_configuration);
-    printReportConfig();
-    reportRemaining(getRemaining());
+  // void standbyPoint() {
+  //   takeConfigurationValue(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+  //   targetPoint(m_configuration);
+  //   printReportConfig();
+  //   reportRemaining(getRemaining());
+  //   resetParser();
+  // }
 
-    // if(getRemaining() == 0.0) {
-    //   if(c == 'w' || c == 'r' || c =='g' || c == 'b') {
-    //     takeConfigurationValue(0.0, -70.0, 35.0, 50.0, 0.0, -75.0, 90.0);
-    //     targetPoint(m_configuration);
-    //     reportRemaining(getRemaining());
-    //     printReportConfig();
-    //   }
-    // }
+  // void pickupPoint() {
+  //   takeConfigurationValue(0.0, -70.0, 35.0, 50.0, 0.0, -75.0, 90.0);
+  //   targetPoint(m_configuration);
+  //   reportRemaining(getRemaining());
+  //   printReportConfig();
+  //   resetParser();
+  // }
 
-    // here is the logic to place the object in different location
-    switch(c) {
-      case 'w':
-        if(getRemaining() == 0.0) {
-          takeConfigurationValue(53.0, 20.0, 25.0, 50.0, 23.0, 20.0, 19.0);
-          targetPoint(m_configuration);
-          printReportConfig();
-          reportRemaining(getRemaining());
-          resetParser();
-        }
-        break;
-      case 'r':
-        if(getRemaining() == 0.0) {
-          takeConfigurationValue(-29.0, -53.0, 28.0, 59.0, 0.0, -20.0, 59.0);
-          targetPoint(m_configuration);
-          printReportConfig();
-          reportRemaining(getRemaining());
-          resetParser();
-        }
-        break;
-      case 'g':
-        if(getRemaining() == 0.0) {
-          takeConfigurationValue(63.0, 23.0, -24.0, 45.0, 0.0, 67.0, 0.0);
-          targetPoint(m_configuration);
-          printReportConfig();
-          reportRemaining(getRemaining());
-          resetParser();
-        }
-        break;
-      case 'b':
-        if(getRemaining() == 0.0) {
-          takeConfigurationValue(83.0, -53.0, -21.0, 0.0, 24.0, 0.0, 24.0);
-          targetPoint(m_configuration);
-          printReportConfig();
-          reportRemaining(getRemaining());
-          resetParser();
-        }
-        break;
-      default:
-        stopDrives();
-    }
-  }
+  // void parseColor(char c) {
+  //   // here is the logic to place the object in different location
+  //   switch(c) {
+  //     case 'w':
+  //       takeConfigurationValue(-85.00, -50.00, 10.00, -90.00, -50.00, 90.00, 87.73);
+  //       targetPoint(m_configuration);
+  //       printReportConfig();
+  //       reportRemaining(getRemaining());
+  //       resetParser();
+  //     break;
+  //     case 'r':
+  //       takeConfigurationValue(-50.00, -70.00, 10.00, 70.00, -87.99, -20.00, 87.73);
+  //       targetPoint(m_configuration);
+  //       printReportConfig();
+  //       reportRemaining(getRemaining());
+  //       resetParser();
+  //     break;
+  //     case 'g':
+  //       takeConfigurationValue(63.00, 23.00, -22.61, 45.00, -60.00, 67.00, 0.00);
+  //       targetPoint(m_configuration);
+  //       printReportConfig();
+  //       reportRemaining(getRemaining());
+  //       resetParser();
+  //     break;
+  //     case 'b':
+  //       takeConfigurationValue(83.00, -53.00, -7.00, 90.00, 24.00, 90.00, 24.00);
+  //       targetPoint(m_configuration);
+  //       printReportConfig();
+  //       reportRemaining(getRemaining());
+  //       resetParser();
+  //     break;
+  //     default:
+  //       stopDrives();
+  //   }
+  // }
 
 
   virtual int offset(int drive) = 0;
@@ -187,6 +183,7 @@ public:
   virtual int upper(int drive) = 0;
   virtual void writePWM(int, int) = 0;
   virtual void reportRemaining(float time) = 0;
+  virtual void reportRequired(float time) = 0;
   virtual void reportConfiguration(float, float, float, float, float, float, float) = 0;
 
 protected:

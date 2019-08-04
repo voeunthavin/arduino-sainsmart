@@ -10,8 +10,8 @@
 #define OUT 8
 
 
-char color() {
-  char c = ' ';
+char getColor() {
+  char c = 'x';
 
   digitalWrite(S2, LOW);
   digitalWrite(S3, LOW);
@@ -32,30 +32,29 @@ char color() {
 
   if (red < blue && red < green && red < 20) {
     if (red <=10 && green <=10 && blue <=10) {
-      Serial.println("WHILE");
+      // Serial.println("WHILE");
       c = 'w';
     } else {
-      Serial.println(" - (Red Color)");
       c = 'r';
+      // Serial.println(" - (Red Color)");
     }
   } else if (blue < red && blue < green) {
     if (red <=10 && green <=10 && blue <= 10){
-      Serial.println("WHILE");
+      // Serial.println("WHILE");
       c = 'w';
     } else {
-      Serial.println(" - (Blue Color)");
+      // Serial.println(" - (Blue Color)");
       c = 'b';
     }
   } else if (green < red && green < blue) {
       if (red <= 10 && green <=10 && blue <= 10) {
-        Serial.println("WHILE");
+        // Serial.println("WHILE");
         c = 'w';
       } else {
-        Serial.println(" - (Green Color)");
+        // Serial.println(" - (Green Color)");
         c = 'g';
       }
   } else {
-    Serial.println();
     c = 'x';
   }
 
@@ -82,11 +81,10 @@ public:
     Serial.print(value);
     Serial.write("\r\n");
   }
-  void reportTime(void) {
-    Serial.print(millis());
-    Serial.write("\r\n");
-  }
   void reportRemaining(float time) {
+    reportFloat(time);
+  }
+  void reportRequired(float time) {
     reportFloat(time);
   }
   void reportConfiguration(float base, float shoulder, float elbow, float roll, float pitch, float wrist, float gripper) {
@@ -115,7 +113,9 @@ protected:
 };
 
 
-unsigned long t0, previousMillis;
+unsigned long t0;
+char color;
+bool flag[5];
 
 Controller controller;
 
@@ -133,14 +133,70 @@ void setup() {
   digitalWrite(S0, HIGH);
   digitalWrite(S1, HIGH);
 
-  t0 = millis();
+  t0 = 0;
+  flag[0] = true;
+  flag[1] = false;
+  flag[2] = false;
 }
 
 void loop() {
-  int dt = millis() - t0;
-  if(controller.getRemaining() == 0) {
-    controller.parseColor(color());
+  unsigned long current = millis() - t0;
+  if(current * 0.001 > 0.0) {
+    if(flag[0]) {
+      controller.takeConfigurationValue(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+      controller.targetPoint();
+      controller.resetParser();
+      color = getColor();
+      flag[0] = false;
+      flag[1] = true;
+    }
   }
-  controller.update(dt * 0.001);
-  t0 += dt;
+  if(current * 0.001 > 3.0) {
+    if(color != 'x') {
+      if(flag[1]) {
+        controller.takeConfigurationValue(0.0, -65.0, 30.0, 50.0, 0.0, -75.0, 90.0);
+        controller.targetPoint();
+        controller.resetParser();
+        flag[1] = false;
+      }
+      if(controller.getRemaining() <= 0.01) {
+        flag[2] = true;
+      }
+    } else {
+      t0 = millis();
+      flag[0] = true;
+      flag[2] = false;
+    }
+  }
+  if(current * 0.001 > 6.0) {
+    if(flag[2]) {
+      switch(color) {
+        case 'w':
+          controller.takeConfigurationValue(-85.00, -50.00, 10.00, -90.00, -50.00, 90.00, 87.73);
+          break;
+        case 'r':
+          controller.takeConfigurationValue(-50.00, -70.00, 10.00, 70.00, -87.99, -20.00, 87.73);
+          break;
+        case 'g':
+          controller.takeConfigurationValue(63.00, 23.00, -22.61, 45.00, -60.00, 67.00, 0.00);
+          break;
+        case 'b':
+          controller.takeConfigurationValue(83.00, -53.00, -7.00, 75.00, 24.00, 80.00, 0.00);
+          break;
+      }
+      controller.targetPoint();
+      controller.resetParser();
+      flag[2] = false;
+    }
+    if(controller.getRemaining() <= 0.01) {
+      t0 = millis();
+      flag[0] = true;
+    }
+    Serial.println(controller.getRemaining());
+  }
+
+  controller.printReportConfig();
+  Serial.println(current * 0.001);
+  Serial.println(color);
+  controller.update(0.01);
 }
