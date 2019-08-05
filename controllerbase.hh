@@ -124,59 +124,6 @@ public:
     m_curve[3].pos(), m_curve[4].pos(), m_curve[5].pos(), m_curve[6].pos());
   }
 
-  // void standbyPoint() {
-  //   takeConfigurationValue(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-  //   targetPoint(m_configuration);
-  //   printReportConfig();
-  //   reportRemaining(getRemaining());
-  //   resetParser();
-  // }
-
-  // void pickupPoint() {
-  //   takeConfigurationValue(0.0, -70.0, 35.0, 50.0, 0.0, -75.0, 90.0);
-  //   targetPoint(m_configuration);
-  //   reportRemaining(getRemaining());
-  //   printReportConfig();
-  //   resetParser();
-  // }
-
-  // void parseColor(char c) {
-  //   // here is the logic to place the object in different location
-  //   switch(c) {
-  //     case 'w':
-  //       takeConfigurationValue(-85.00, -50.00, 10.00, -90.00, -50.00, 90.00, 87.73);
-  //       targetPoint(m_configuration);
-  //       printReportConfig();
-  //       reportRemaining(getRemaining());
-  //       resetParser();
-  //     break;
-  //     case 'r':
-  //       takeConfigurationValue(-50.00, -70.00, 10.00, 70.00, -87.99, -20.00, 87.73);
-  //       targetPoint(m_configuration);
-  //       printReportConfig();
-  //       reportRemaining(getRemaining());
-  //       resetParser();
-  //     break;
-  //     case 'g':
-  //       takeConfigurationValue(63.00, 23.00, -22.61, 45.00, -60.00, 67.00, 0.00);
-  //       targetPoint(m_configuration);
-  //       printReportConfig();
-  //       reportRemaining(getRemaining());
-  //       resetParser();
-  //     break;
-  //     case 'b':
-  //       takeConfigurationValue(83.00, -53.00, -7.00, 90.00, 24.00, 90.00, 24.00);
-  //       targetPoint(m_configuration);
-  //       printReportConfig();
-  //       reportRemaining(getRemaining());
-  //       resetParser();
-  //     break;
-  //     default:
-  //       stopDrives();
-  //   }
-  // }
-
-
   virtual int offset(int drive) = 0;
   virtual float resolution(int drive) = 0;
   virtual int lower(int drive) = 0;

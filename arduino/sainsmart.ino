@@ -23,13 +23,6 @@ char getColor() {
   digitalWrite(S3, HIGH);
   int green = pulseIn(OUT, LOW);
 
-  // Serial.print("RED: ");
-  // Serial.println(red, DEC);
-  // Serial.print("GREEN: ");
-  // Serial.println(green, DEC);
-  // Serial.print("BLUE: ");
-  // Serial.println(blue, DEC);
-
   if (red < blue && red < green && red < 20) {
     if (red <=10 && green <=10 && blue <=10) {
       // Serial.println("WHILE");
@@ -115,7 +108,7 @@ protected:
 
 unsigned long t0;
 char color;
-bool flag[5];
+bool flag[6];
 
 Controller controller;
 
@@ -137,11 +130,15 @@ void setup() {
   flag[0] = true;
   flag[1] = false;
   flag[2] = false;
+  flag[3] = false;
+  flag[4] = false;
+  flag[5] = false;
+  flag[6] = false;
 }
 
 void loop() {
   unsigned long current = millis() - t0;
-  if(current * 0.001 > 0.0) {
+  if(current * 0.001 > 0.0 && controller.getRemaining() <= 0.01) {
     if(flag[0]) {
       controller.takeConfigurationValue(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
       controller.targetPoint();
@@ -151,16 +148,25 @@ void loop() {
       flag[1] = true;
     }
   }
-  if(current * 0.001 > 3.0) {
+  if(current * 0.001 > 2.0) {
     if(color != 'x') {
       if(flag[1]) {
-        controller.takeConfigurationValue(0.0, -65.0, 30.0, 50.0, 0.0, -75.0, 90.0);
+        controller.takeConfigurationValue(5.00, -75.00, 15.00, -5.00, -50.00, 0.00, 0.0); // pick
         controller.targetPoint();
         controller.resetParser();
         flag[1] = false;
+        flag[3] = true;
       }
-      if(controller.getRemaining() <= 0.01) {
-        flag[2] = true;
+      if(flag[3] && controller.getRemaining() <= 0.01) {
+        controller.takeConfigurationValue(5.00, -75.00, 15.00, -5.00, -50.00, 0.00, 40.0); // grap!!
+        controller.targetPoint();
+        controller.resetParser();
+        flag[3] = false;
+        flag[4] = true;
+      }
+      if(flag[4] && controller.getRemaining() <= 0.01) {
+        flag[4] = false;
+        flag[2] = true; // go to place position
       }
     } else {
       t0 = millis();
@@ -168,33 +174,56 @@ void loop() {
       flag[2] = false;
     }
   }
-  if(current * 0.001 > 6.0) {
+  if(current * 0.001 > 5.5) {
     if(flag[2]) {
       switch(color) {
         case 'w':
-          controller.takeConfigurationValue(-85.00, -50.00, 10.00, -90.00, -50.00, 90.00, 87.73);
+          controller.takeConfigurationValue(-85.00, -50.00, 10.00, -90.00, -50.00, 90.00, 40.0);
           break;
         case 'r':
-          controller.takeConfigurationValue(-50.00, -70.00, 10.00, 70.00, -87.99, -20.00, 87.73);
+          controller.takeConfigurationValue(-50.00, -70.00, 10.00, 70.00, 20.0, -60.00, 40.0);
           break;
         case 'g':
-          controller.takeConfigurationValue(63.00, 23.00, -22.61, 45.00, -60.00, 67.00, 0.00);
+          controller.takeConfigurationValue(63.00, 23.00, -22.61, 45.00, -60.00, 67.00, 40.0);
           break;
         case 'b':
-          controller.takeConfigurationValue(83.00, -53.00, -7.00, 75.00, 24.00, 80.00, 0.00);
+          controller.takeConfigurationValue(83.00, -53.00, -7.00, -45.00, 24.00, 0.00, 40.0);
           break;
       }
       controller.targetPoint();
       controller.resetParser();
       flag[2] = false;
+      flag[5] = true; // drop it!!
     }
-    if(controller.getRemaining() <= 0.01) {
+    if(flag[5] && controller.getRemaining() <= 0.01) {
+      switch(color){
+        case 'w':
+          controller.takeConfigurationValue(-85.00, -50.00, 10.00, -90.00, -50.00, 90.00, 0.0);
+          break;
+        case 'r':
+          controller.takeConfigurationValue(-50.00, -70.00, 10.00, 70.00, 20.0, -60.00, 0.0);
+          break;
+        case 'g':
+          controller.takeConfigurationValue(63.00, 23.00, -22.61, 45.00, -60.00, 67.00, 0.0);
+          break;
+        case 'b':
+          controller.takeConfigurationValue(83.00, -53.00, -7.00, -45.00, 24.00, 0.0, 0.0);
+          break;
+      }
+      controller.targetPoint();
+      controller.resetParser();
+      flag[5] = false;
+      flag[6] = true; // reset and scan color
+    }
+
+    if(flag[6] && controller.getRemaining() <= 0.01) {
       t0 = millis();
       flag[0] = true;
+      flag[6] = false;
     }
-    Serial.println(controller.getRemaining());
   }
 
+  Serial.println(controller.getRemaining());
   controller.printReportConfig();
   Serial.println(current * 0.001);
   Serial.println(color);
