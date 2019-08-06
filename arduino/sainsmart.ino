@@ -108,7 +108,7 @@ protected:
 
 unsigned long t0;
 char color;
-bool flag[6];
+bool flag[8];
 
 Controller controller;
 
@@ -151,18 +151,25 @@ void loop() {
   if(current * 0.001 > 2.0) {
     if(color != 'x') {
       if(flag[1]) {
-        controller.takeConfigurationValue(5.00, -75.00, 15.00, -5.00, -50.00, 0.00, 0.0); // pick
+        controller.takeConfigurationValue(5.00, -75.00, 15.00, -5.00, -55.00, 0.00, 0.0); // pick
         controller.targetPoint();
         controller.resetParser();
         flag[1] = false;
         flag[3] = true;
       }
       if(flag[3] && controller.getRemaining() <= 0.01) {
-        controller.takeConfigurationValue(5.00, -75.00, 15.00, -5.00, -50.00, 0.00, 40.0); // grap!!
+        controller.takeConfigurationValue(5.00, -75.00, 15.00, -5.00, -55.00, 0.00, 40.0); // grap!!
         controller.targetPoint();
         controller.resetParser();
         flag[3] = false;
+        flag[7] = true; // go back to standby point
+      }
+      if(flag[7] && controller.getRemaining() <= 0.01) {
+        controller.takeConfigurationValue(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 40.0);
+        controller.targetPoint();
+        controller.resetParser();
         flag[4] = true;
+        flag[7] = false;
       }
       if(flag[4] && controller.getRemaining() <= 0.01) {
         flag[4] = false;
