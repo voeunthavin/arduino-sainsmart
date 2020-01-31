@@ -10,8 +10,7 @@ const int ELBOW    = 2;
 const int ROLL     = 3;
 const int PITCH    = 4;
 const int WRIST    = 5;
-const int GRIPPER  = 6;
-const int DRIVES   = 7;
+const int DRIVES   = 6;
 
 const float ELBOW_RANGE = 60;
 
@@ -65,14 +64,13 @@ public:
   }
 
   // Should modify this function to take the arguments in order to control the robot manually
-  void takeConfigurationValue(float base, float shoulder, float elbow, float roll, float pitch, float wrist, float gripper) {
+  void takeConfigurationValue(float base, float shoulder, float elbow, float roll, float pitch, float wrist) {
     m_configuration[0] = clipAngle(0, base);
     m_configuration[1] = clipAngle(1, shoulder);
     m_configuration[2] = clipAngle(2, elbow);
     m_configuration[3] = clipAngle(3, roll);
     m_configuration[4] = clipAngle(4, pitch);
     m_configuration[5] = clipAngle(5, wrist);
-    m_configuration[6] = clipAngle(6, gripper);
   }
 
   float timeRequired(int drive, float angle) {
@@ -121,7 +119,7 @@ public:
 
   void printReportConfig() {
     reportConfiguration(m_curve[0].pos(), m_curve[1].pos(), m_curve[2].pos(),
-    m_curve[3].pos(), m_curve[4].pos(), m_curve[5].pos(), m_curve[6].pos());
+    m_curve[3].pos(), m_curve[4].pos(), m_curve[5].pos());
   }
 
   virtual int offset(int drive) = 0;
@@ -131,7 +129,7 @@ public:
   virtual void writePWM(int, int) = 0;
   virtual void reportRemaining(float time) = 0;
   virtual void reportRequired(float time) = 0;
-  virtual void reportConfiguration(float, float, float, float, float, float, float) = 0;
+  virtual void reportConfiguration(float, float, float, float, float, float) = 0;
 
 protected:
   float m_configuration[DRIVES];
