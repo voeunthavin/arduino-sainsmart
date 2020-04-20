@@ -3,15 +3,14 @@
 #include <Adafruit_PWMServoDriver.h>
 
 
-// Humble Object connecting device to tested code http://xunitpatterns.com/Humble%20Object.html
 
-class Controller: public ControllerBase
-{
+
+class Controller: public ControllerBase {
 public:
   Controller(void) {}
 	void setup(void) {
 		m_servo.begin();
-		m_servo.setPWMFreq(50);
+		m_servo.setPWMFreq(PWMFREQ);
 	}
   int offset(int drive) { return OFFSET[drive]; }
   float resolution(int drive) { return RESOLUTION[drive]; }
@@ -71,7 +70,7 @@ public:
   }
   void writePWM(int drive, int pwm) {
   	// Convert to Pulse Width from Pulse wide
-		int pulse_width = int(float(pwm) / 1000000 * 50 * 4096);
+		int pulse_width = int(float(pwm) / 1000000 * PWMFREQ * 4096);
 		m_servo.setPWM(drive, 0, pulse_width); 	   
   }
 protected:
